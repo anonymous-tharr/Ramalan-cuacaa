@@ -1,0 +1,2537 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyMate AI - Aplikasi Cuaca Terbaik</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --gemini-gradient: linear-gradient(135deg, #4285f4 0%, #34a853 50%, #fbbc05 75%, #ea4335 100%);
+        --dark-gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        --glass-bg: rgba(255, 255, 255, 0.1);
+        --glass-border: rgba(255, 255, 255, 0.2);
+        --text-primary: #ffffff;
+        --text-secondary: rgba(255, 255, 255, 0.8);
+        --shadow-soft: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        --shadow-hard: 0 20px 60px 0 rgba(31, 38, 135, 0.5);
+        --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        --border-radius-xl: 30px;
+        --border-radius-lg: 20px;
+        --border-radius-md: 15px;
+        --border-radius-sm: 10px;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        color: var(--text-primary);
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+        background: var(--dark-gradient);
+    }
+
+    /* Animated Background */
+    .background-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -2;
+        background: var(--dark-gradient);
+        overflow: hidden;
+        transition: background-image 2s ease;
+    }
+
+    .animated-particles {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .particle {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        animation: float 20s infinite linear;
+    }
+
+    @keyframes float {
+        0% {
+            transform: translateY(100vh) rotate(0deg);
+            opacity: 0;
+        }
+        10% {
+            opacity: 1;
+        }
+        90% {
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100vh) rotate(360deg);
+            opacity: 0;
+        }
+    }
+
+    .aurora {
+        position: absolute;
+        width: 200%;
+        height: 100%;
+        background: linear-gradient(45deg, 
+            transparent, 
+            rgba(102, 126, 234, 0.1), 
+            rgba(118, 75, 162, 0.1), 
+            transparent);
+        animation: aurora 15s ease-in-out infinite;
+    }
+
+    @keyframes aurora {
+        0%, 100% {
+            transform: translateX(-50%) skewX(-20deg);
+        }
+        50% {
+            transform: translateX(0%) skewX(-20deg);
+        }
+    }
+
+    /* Main Container */
+    .app-container {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Header */
+    .app-header {
+        padding: 1.5rem 2rem;
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--glass-border);
+        animation: slideDown 0.8s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .header-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .logo {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        cursor: pointer;
+        transition: var(--transition-smooth);
+    }
+
+    .logo:hover {
+        transform: scale(1.05);
+    }
+
+    .logo-icon {
+        width: 50px;
+        height: 50px;
+        background: var(--primary-gradient);
+        border-radius: var(--border-radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        box-shadow: var(--shadow-soft);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    .logo-text {
+        font-size: 1.8rem;
+        font-weight: 700;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .search-container {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex: 1;
+        max-width: 500px;
+    }
+
+    .search-box {
+        flex: 1;
+        position: relative;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 1rem 1.5rem 1rem 3rem;
+        border-radius: 50px;
+        border: 1px solid var(--glass-border);
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: var(--transition-smooth);
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        transform: translateY(-2px);
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+    }
+
+    .header-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .header-btn {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        border: 1px solid var(--glass-border);
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: var(--transition-smooth);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+
+    .header-btn:hover {
+        background: var(--primary-gradient);
+        transform: translateY(-3px) scale(1.1);
+        box-shadow: var(--shadow-soft);
+    }
+
+    /* Main Content */
+    .app-main {
+        flex: 1;
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        animation: fadeIn 1s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Weather Section */
+    .weather-section {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+    }
+
+    .main-weather-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border-radius: var(--border-radius-xl);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--shadow-hard);
+        padding: 2.5rem;
+        position: relative;
+        overflow: hidden;
+        transition: var(--transition-smooth);
+    }
+
+    .main-weather-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 30px 80px 0 rgba(31, 38, 135, 0.6);
+    }
+
+    .weather-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 2rem;
+    }
+
+    .location-info h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .location-info .date {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .weather-main {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 3rem;
+    }
+
+    .temperature-display {
+        display: flex;
+        align-items: flex-start;
+    }
+
+    .temp-value {
+        font-size: 6rem;
+        font-weight: 300;
+        line-height: 1;
+        background: var(--accent-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .temp-unit {
+        font-size: 2rem;
+        margin-top: 1rem;
+        color: var(--text-secondary);
+    }
+
+    .weather-visual {
+        text-align: center;
+        animation: float-icon 3s ease-in-out infinite;
+    }
+
+    @keyframes float-icon {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    .weather-icon-main {
+        font-size: 5rem;
+        margin-bottom: 1rem;
+        filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.5));
+    }
+
+    .weather-description {
+        font-size: 1.3rem;
+        text-transform: capitalize;
+        color: var(--text-secondary);
+    }
+
+    .weather-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .detail-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--border-radius-lg);
+        padding: 1.5rem;
+        text-align: center;
+        transition: var(--transition-smooth);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .detail-card:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-3px);
+    }
+
+    .detail-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        background: var(--accent-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .detail-label {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.3rem;
+    }
+
+    .detail-value {
+        font-size: 1.3rem;
+        font-weight: 600;
+    }
+
+    .weather-alert {
+        background: linear-gradient(135deg, rgba(245, 87, 108, 0.2), rgba(240, 147, 251, 0.2));
+        border-radius: var(--border-radius-lg);
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        border: 1px solid rgba(245, 87, 108, 0.3);
+        transition: var(--transition-smooth);
+    }
+
+    .weather-alert.hidden {
+        display: none;
+    }
+
+    .alert-icon {
+        font-size: 1.5rem;
+        color: #f5576c;
+        animation: blink 2s infinite;
+    }
+
+    @keyframes blink {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    /* Side Cards */
+    .side-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .forecast-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border-radius: var(--border-radius-xl);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--shadow-soft);
+        padding: 2rem;
+        transition: var(--transition-smooth);
+    }
+
+    .forecast-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-hard);
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .forecast-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .forecast-item {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--border-radius-md);
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: var(--transition-smooth);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .forecast-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateX(5px);
+    }
+
+    .forecast-day {
+        font-weight: 600;
+        min-width: 80px;
+    }
+
+    .forecast-icon {
+        font-size: 1.5rem;
+        color: #667eea;
+    }
+
+    .forecast-temp {
+        font-weight: 600;
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .temp-high {
+        color: var(--text-primary);
+    }
+
+    .temp-low {
+        color: var(--text-secondary);
+    }
+
+    /* AI Assistant */
+    .ai-assistant {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border-radius: var(--border-radius-xl);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--shadow-soft);
+        padding: 2rem;
+        height: 400px;
+        display: flex;
+        flex-direction: column;
+        transition: var(--transition-smooth);
+    }
+
+    .ai-assistant:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-hard);
+    }
+
+    .ai-chat {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .ai-message {
+        max-width: 80%;
+        padding: 1rem 1.5rem;
+        border-radius: var(--border-radius-lg);
+        animation: messageSlide 0.3s ease-out;
+    }
+
+    @keyframes messageSlide {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .ai-message.ai {
+        background: rgba(66, 133, 244, 0.2);
+        border: 1px solid rgba(66, 133, 244, 0.3);
+        align-self: flex-start;
+        border-bottom-left-radius: 5px;
+    }
+
+    .ai-message.user {
+        background: var(--primary-gradient);
+        align-self: flex-end;
+        border-bottom-right-radius: 5px;
+    }
+
+    .ai-input-container {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .ai-input {
+        flex: 1;
+        padding: 1rem 1.5rem;
+        border-radius: 50px;
+        border: 1px solid var(--glass-border);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: var(--transition-smooth);
+    }
+
+    .ai-input:focus {
+        outline: none;
+        border-color: #4285f4;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .send-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: none;
+        background: var(--gemini-gradient);
+        color: white;
+        cursor: pointer;
+        transition: var(--transition-smooth);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+
+    .send-btn:hover {
+        transform: scale(1.1);
+        box-shadow: var(--shadow-soft);
+    }
+
+    /* Todo Section with Alarm */
+    .todo-section {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border-radius: var(--border-radius-xl);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--shadow-soft);
+        padding: 2rem;
+        transition: var(--transition-smooth);
+    }
+
+    .todo-section:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-hard);
+    }
+
+    .todo-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .add-todo-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 1px solid var(--glass-border);
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: var(--transition-smooth);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .add-todo-btn:hover {
+        background: var(--primary-gradient);
+        transform: rotate(90deg) scale(1.1);
+    }
+
+    .todo-input-container {
+        display: none;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .todo-input {
+        flex: 1;
+        padding: 0.8rem 1.2rem;
+        border-radius: 50px;
+        border: 1px solid var(--glass-border);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-primary);
+        font-size: 1rem;
+    }
+
+    .todo-input:focus {
+        outline: none;
+        border-color: #667eea;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .todo-action-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+        transition: var(--transition-smooth);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+
+    .save-todo-btn {
+        background: #2ecc71;
+        color: white;
+    }
+
+    .save-todo-btn:hover {
+        background: #27ae60;
+        transform: scale(1.1);
+    }
+
+    .cancel-todo-btn {
+        background: #e74c3c;
+        color: white;
+    }
+
+    .cancel-todo-btn:hover {
+        background: #c0392b;
+        transform: scale(1.1);
+    }
+
+    .todo-list {
+        max-height: 400px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .todo-item {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--border-radius-md);
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: var(--transition-smooth);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .todo-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateX(5px);
+    }
+
+    .todo-checkbox {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: #667eea;
+    }
+
+    .todo-text {
+        flex: 1;
+        transition: var(--transition-smooth);
+    }
+
+    .todo-item.completed .todo-text {
+        text-decoration: line-through;
+        opacity: 0.6;
+    }
+
+    .todo-time {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-right: 1rem;
+    }
+
+    .todo-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .delete-todo {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(231, 76, 60, 0.2);
+        color: #e74c3c;
+        cursor: pointer;
+        transition: var(--transition-smooth);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .delete-todo:hover {
+        background: #e74c3c;
+        color: white;
+        transform: scale(1.1);
+    }
+
+    /* 24 Hour Weather Table */
+    .weather-table-section {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border-radius: var(--border-radius-xl);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--shadow-soft);
+        padding: 2rem;
+        transition: var(--transition-smooth);
+        overflow-x: auto;
+    }
+
+    .weather-table-section:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-hard);
+    }
+
+    .weather-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+    .weather-table th,
+    .weather-table td {
+        padding: 0.8rem;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .weather-table th {
+        background: rgba(102, 126, 234, 0.2);
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .weather-table tr:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .weather-table td {
+        color: var(--text-secondary);
+    }
+
+    .table-temp {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .table-icon {
+        font-size: 1.2rem;
+        color: #667eea;
+    }
+
+    /* City Gallery Section */
+    .city-gallery-section {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border-radius: var(--border-radius-xl);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--shadow-soft);
+        padding: 2rem;
+        transition: var(--transition-smooth);
+    }
+
+    .city-gallery-section:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-hard);
+    }
+
+    .gallery-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .gallery-item {
+        position: relative;
+        border-radius: var(--border-radius-md);
+        overflow: hidden;
+        height: 150px;
+        cursor: pointer;
+        transition: var(--transition-smooth);
+    }
+
+    .gallery-item:hover {
+        transform: scale(1.05);
+        box-shadow: var(--shadow-soft);
+    }
+
+    .gallery-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: var(--transition-smooth);
+    }
+
+    .gallery-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+        padding: 1rem;
+        color: white;
+        font-size: 0.9rem;
+        text-align: center;
+    }
+
+    .gallery-title {
+        font-weight: 600;
+        margin-bottom: 0.2rem;
+    }
+
+    .gallery-photographer {
+        font-size: 0.8rem;
+        opacity: 0.8;
+    }
+
+    /* Welcome Section */
+    .welcome-section {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border-radius: var(--border-radius-xl);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--shadow-soft);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        text-align: center;
+        transition: var(--transition-smooth);
+    }
+
+    .welcome-section:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-hard);
+    }
+
+    .welcome-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .welcome-description {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    /* Info Section */
+    .info-section {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border-radius: var(--border-radius-xl);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--shadow-soft);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        transition: var(--transition-smooth);
+    }
+
+    .info-section:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-hard);
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .info-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--border-radius-md);
+        padding: 1.5rem;
+        text-align: center;
+        transition: var(--transition-smooth);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .info-card:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-3px);
+    }
+
+    .info-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        background: var(--accent-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .info-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+
+    .info-description {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    /* Loading Spinner */
+    .loading-spinner {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 2000;
+    }
+
+    .spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        border-top: 4px solid #4285f4;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Notification */
+    .notification {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        padding: 1.5rem 2rem;
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border-radius: var(--border-radius-lg);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--shadow-hard);
+        transform: translateX(400px);
+        opacity: 0;
+        transition: var(--transition-bounce);
+        z-index: 1001;
+        max-width: 400px;
+    }
+
+    .notification.show {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    .notification.success {
+        border-left: 4px solid #2ecc71;
+    }
+
+    .notification.error {
+        border-left: 4px solid #e74c3c;
+    }
+
+    .notification.info {
+        border-left: 4px solid #667eea;
+    }
+
+    .notification.warning {
+        border-left: 4px solid #f39c12;
+    }
+
+    /* Footer */
+    .app-footer {
+        padding: 1.5rem;
+        text-align: center;
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border-top: 1px solid var(--glass-border);
+        color: var(--text-secondary);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .weather-section {
+            grid-template-columns: 1fr;
+        }
+        
+        .side-cards {
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .app-header {
+            padding: 1rem;
+        }
+        
+        .header-content {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .search-container {
+            max-width: 100%;
+        }
+        
+        .app-main {
+            padding: 1rem;
+        }
+        
+        .weather-section {
+            grid-template-columns: 1fr;
+        }
+        
+        .side-cards {
+            grid-template-columns: 1fr;
+        }
+        
+        .main-weather-card {
+            padding: 1.5rem;
+        }
+        
+        .location-info h2 {
+            font-size: 2rem;
+        }
+        
+        .temp-value {
+            font-size: 4rem;
+        }
+        
+        .weather-main {
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
+        .weather-details {
+            grid-template-columns: 1fr;
+        }
+        
+        .forecast-container {
+            gap: 0.5rem;
+        }
+        
+        .weather-table {
+            font-size: 0.8rem;
+        }
+        
+        .weather-table th,
+        .weather-table td {
+            padding: 0.5rem;
+        }
+        
+        .gallery-container {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        }
+    }
+
+    @media (max-width: 480px) {
+        .logo-text {
+            font-size: 1.5rem;
+        }
+        
+        .temp-value {
+            font-size: 3rem;
+        }
+        
+        .weather-icon-main {
+            font-size: 4rem;
+        }
+        
+        .card-title {
+            font-size: 1.2rem;
+        }
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: rgba(102, 126, 234, 0.5);
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(102, 126, 234, 0.7);
+    }
+
+    /* Selection Style */
+    ::selection {
+        background: rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+
+    /* Focus Styles */
+    button:focus,
+    input:focus,
+    textarea:focus {
+        outline: 2px solid #667eea;
+        outline-offset: 2px;
+    }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="background-container" id="backgroundContainer">
+        <div class="animated-particles" id="particles"></div>
+        <div class="aurora"></div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Main App Container -->
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-cloud-sun"></i>
+                    </div>
+                    <div class="logo-text">SkyMate AI</div>
+                </div>
+                
+                <div class="search-container">
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="search-input" id="cityInput" placeholder="Cari kota...">
+                    </div>
+                </div>
+                
+                <div class="header-buttons">
+                    <button class="header-btn" id="locationBtn" title="Lokasi Saya">
+                        <i class="fas fa-location-dot"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="app-main">
+            <!-- Welcome Section -->
+            <div class="welcome-section">
+                <h1 class="welcome-title">Selamat Datang di SkyMate AI</h1>
+                <p class="welcome-description">
+                    Aplikasi cuaca terbaik dengan AI cerdas yang membantu Anda mengatur jadwal, memberikan peringatan cuaca, dan menampilkan informasi cuaca real-time. Cukup masukkan nama kota untuk memulai!
+                </p>
+            </div>
+
+            <!-- Info Section -->
+            <div class="info-section">
+                <div class="card-title">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Fitur Unggulan</span>
+                </div>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="info-title">AI Cerdas</div>
+                        <div class="info-description">Asisten AI yang memahami kebutuhan Anda</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="info-title">Pengingat Pintar</div>
+                        <div class="info-description">Notifikasi cuaca 30 menit sebelum aktivitas</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <i class="fas fa-images"></i>
+                        </div>
+                        <div class="info-title">Galeri Kota</div>
+                        <div class="info-description">Foto-foto indah dari kota pilihan Anda</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <i class="fas fa-table"></i>
+                        </div>
+                        <div class="info-title">Data 24 Jam</div>
+                        <div class="info-description">Informasi cuaca lengkap setiap jam</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="weather-section">
+                <!-- Main Weather Card -->
+                <div class="main-weather-card">
+                    <div class="weather-header">
+                        <div class="location-info">
+                            <h2 id="cityName">--</h2>
+                            <div class="date">
+                                <i class="far fa-calendar"></i>
+                                <span id="currentDate">--</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="weather-main">
+                        <div class="temperature-display">
+                            <span class="temp-value" id="tempValue">--</span>
+                            <span class="temp-unit">°C</span>
+                        </div>
+                        
+                        <div class="weather-visual">
+                            <div class="weather-icon-main">
+                                <i id="weatherIcon" class="fas fa-question"></i>
+                            </div>
+                            <div class="weather-description" id="weatherDesc">--</div>
+                        </div>
+                    </div>
+                    
+                    <div class="weather-details">
+                        <div class="detail-card">
+                            <div class="detail-icon">
+                                <i class="fas fa-droplet"></i>
+                            </div>
+                            <div class="detail-label">Kelembaban</div>
+                            <div class="detail-value"><span id="humidity">--</span>%</div>
+                        </div>
+                        
+                        <div class="detail-card">
+                            <div class="detail-icon">
+                                <i class="fas fa-wind"></i>
+                            </div>
+                            <div class="detail-label">Angin</div>
+                            <div class="detail-value"><span id="windSpeed">--</span> m/s</div>
+                        </div>
+                        
+                        <div class="detail-card">
+                            <div class="detail-icon">
+                                <i class="fas fa-gauge"></i>
+                            </div>
+                            <div class="detail-label">Tekanan</div>
+                            <div class="detail-value"><span id="pressure">--</span> hPa</div>
+                        </div>
+                        
+                        <div class="detail-card">
+                            <div class="detail-icon">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div class="detail-label">Visibilitas</div>
+                            <div class="detail-value"><span id="visibility">--</span> km</div>
+                        </div>
+                    </div>
+                    
+                    <div class="weather-alert hidden" id="weatherAlert">
+                        <div class="alert-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div id="alertText">Tidak ada peringatan</div>
+                    </div>
+                </div>
+                
+                <!-- Side Cards -->
+                <div class="side-cards">
+                    <!-- Forecast Card -->
+                    <div class="forecast-card">
+                        <div class="card-title">
+                            <i class="fas fa-calendar-days"></i>
+                            <span>Prakiraan 5 Hari</span>
+                        </div>
+                        <div class="forecast-container" id="forecastContainer">
+                            <!-- Forecast items will be added dynamically -->
+                        </div>
+                    </div>
+                    
+                    <!-- AI Assistant -->
+                    <div class="ai-assistant">
+                        <div class="card-title">
+                            <i class="fas fa-robot"></i>
+                            <span>Asisten Gemini AI</span>
+                        </div>
+                        <div class="ai-chat" id="aiChat">
+                            <div class="ai-message ai">
+                                Halo! Saya SkyMate dengan kecerdasan Gemini AI. Ada yang bisa saya bantu hari ini?
+                            </div>
+                        </div>
+                        <div class="ai-input-container">
+                            <input type="text" class="ai-input" id="aiInput" placeholder="Tanyakan apa saja...">
+                            <button class="send-btn" id="sendBtn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 24 Hour Weather Table -->
+            <div class="weather-table-section">
+                <div class="card-title">
+                    <i class="fas fa-clock"></i>
+                    <span>Data Cuaca 24 Jam</span>
+                </div>
+                <table class="weather-table" id="weatherTable">
+                    <thead>
+                        <tr>
+                            <th>Jam</th>
+                            <th>Cuaca</th>
+                            <th>Suhu</th>
+                            <th>Kelembaban</th>
+                            <th>Angin</th>
+                        </tr>
+                    </thead>
+                    <tbody id="weatherTableBody">
+                        <!-- Table rows will be added dynamically -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- City Gallery Section -->
+            <div class="city-gallery-section">
+                <div class="card-title">
+                    <i class="fas fa-images"></i>
+                    <span>Galeri Foto Kota</span>
+                </div>
+                <div class="gallery-container" id="galleryContainer">
+                    <!-- Gallery items will be added dynamically -->
+                </div>
+            </div>
+            
+            <!-- Todo Section with Alarm -->
+            <div class="todo-section">
+                <div class="todo-header">
+                    <div class="card-title">
+                        <i class="fas fa-list-check"></i>
+                        <span>Tugas & Pengingat</span>
+                    </div>
+                    <button class="add-todo-btn" id="addTaskBtn">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                
+                <div class="todo-input-container" id="todoInputContainer">
+                    <input type="text" class="todo-input" id="todoInput" placeholder="Tambah tugas atau pengingat...">
+                    <input type="time" class="todo-input" id="todoTime" style="width: 150px;">
+                    <button class="todo-action-btn save-todo-btn" id="saveTaskBtn">
+                        <i class="fas fa-check"></i>
+                    </button>
+                    <button class="todo-action-btn cancel-todo-btn" id="cancelTaskBtn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="todo-list" id="todoList">
+                    <!-- Todo items will be added dynamically -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+<footer class="app-footer">
+  <p>&copy; 2025 SkyMate  | Crafted by Atharsyah P.F.I</p>
+</footer>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+    // DOM Elements
+    const elements = {
+        cityInput: document.getElementById('cityInput'),
+        locationBtn: document.getElementById('locationBtn'),
+        cityName: document.getElementById('cityName'),
+        currentDate: document.getElementById('currentDate'),
+        tempValue: document.getElementById('tempValue'),
+        weatherIcon: document.getElementById('weatherIcon'),
+        weatherDesc: document.getElementById('weatherDesc'),
+        humidity: document.getElementById('humidity'),
+        windSpeed: document.getElementById('windSpeed'),
+        pressure: document.getElementById('pressure'),
+        visibility: document.getElementById('visibility'),
+        weatherAlert: document.getElementById('weatherAlert'),
+        alertText: document.getElementById('alertText'),
+        forecastContainer: document.getElementById('forecastContainer'),
+        weatherTableBody: document.getElementById('weatherTableBody'),
+        galleryContainer: document.getElementById('galleryContainer'),
+        aiChat: document.getElementById('aiChat'),
+        aiInput: document.getElementById('aiInput'),
+        sendBtn: document.getElementById('sendBtn'),
+        todoList: document.getElementById('todoList'),
+        addTaskBtn: document.getElementById('addTaskBtn'),
+        todoInputContainer: document.getElementById('todoInputContainer'),
+        todoInput: document.getElementById('todoInput'),
+        todoTime: document.getElementById('todoTime'),
+        saveTaskBtn: document.getElementById('saveTaskBtn'),
+        cancelTaskBtn: document.getElementById('cancelTaskBtn'),
+        notification: document.getElementById('notification'),
+        loadingSpinner: document.getElementById('loadingSpinner'),
+        particles: document.getElementById('particles'),
+        backgroundContainer: document.getElementById('backgroundContainer')
+    };
+
+    // App State
+    const state = {
+        currentCity: '',
+        currentWeather: null,
+        currentPosition: null,
+        watchPositionId: null,
+        weatherUpdateInterval: null,
+        todos: [],
+        lastWeatherAlert: null,
+        alarmCheckInterval: null,
+        cityImages: []
+    };
+
+    // Initialize App
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeApp();
+        createParticles();
+    });
+
+    function initializeApp() {
+        // Load todos from localStorage
+        loadTodos();
+        
+        // Set up event listeners
+        setupEventListeners();
+        
+        // Try to get user's location
+        getUserLocation();
+        
+        // Set current date
+        updateCurrentDate();
+        
+        // Start weather update interval (5 minutes)
+        startWeatherUpdateInterval();
+        
+        // Start alarm checking interval (every minute)
+        startAlarmCheckInterval();
+    }
+
+    function createParticles() {
+        const particleCount = 50;
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            
+            const size = Math.random() * 5 + 2;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.animationDelay = `${Math.random() * 20}s`;
+            particle.style.animationDuration = `${Math.random() * 20 + 20}s`;
+            
+            elements.particles.appendChild(particle);
+        }
+    }
+
+    function setupEventListeners() {
+        // Weather search
+        elements.cityInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchWeather();
+        });
+        
+        // Location button
+        elements.locationBtn.addEventListener('click', getUserLocation);
+        
+        // AI Assistant
+        elements.sendBtn.addEventListener('click', sendAiMessage);
+        elements.aiInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendAiMessage();
+        });
+        
+        // Todo List
+        elements.addTaskBtn.addEventListener('click', showTodoInput);
+        elements.saveTaskBtn.addEventListener('click', addTodo);
+        elements.cancelTaskBtn.addEventListener('click', hideTodoInput);
+        elements.todoInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTodo();
+        });
+    }
+
+    function showNotification(message, type = 'info') {
+        elements.notification.textContent = message;
+        elements.notification.className = `notification ${type}`;
+        elements.notification.classList.add('show');
+        
+        setTimeout(() => {
+            elements.notification.classList.remove('show');
+        }, 5000);
+    }
+
+    function showLoading() {
+        elements.loadingSpinner.style.display = 'block';
+    }
+
+    function hideLoading() {
+        elements.loadingSpinner.style.display = 'none';
+    }
+
+    // Weather Functions
+    async function searchWeather() {
+        const city = elements.cityInput.value.trim();
+        if (!city) return;
+        
+        state.currentCity = city;
+        showLoading();
+        await fetchWeatherData(city);
+        hideLoading();
+    }
+
+    async function fetchWeatherData(city) {
+        try {
+            const response = await fetch(`/api/weather?city=${city}`);
+            
+            if (!response.ok) throw new Error('Data cuaca tidak ditemukan');
+            
+            const data = await response.json();
+            state.currentWeather = data;
+            displayWeatherData(data);
+            
+            // Fetch forecast data
+            await fetchForecastData(city);
+            
+            // Fetch 24 hour data
+            await fetch24HourData(city);
+            
+            // Fetch city background
+            await fetchCityBackground(city);
+            
+            // Fetch city gallery
+            await fetchCityGallery(city);
+            
+            // Check for weather alerts
+            checkWeatherAlerts(data);
+            
+            // Trigger AI response
+            triggerAiWeatherUpdate(data);
+            
+            // Check for upcoming todos with weather conditions
+            checkTodosWithWeather(data);
+        } catch (error) {
+            console.error('Error fetching weather data:', error);
+            showNotification('Gagal mengambil data cuaca. Silakan coba lagi.', 'error');
+        }
+    }
+
+    async function fetchForecastData(city) {
+        try {
+            const response = await fetch(`/api/forecast?city=${city}`);
+            
+            if (!response.ok) throw new Error('Data prakiraan tidak ditemukan');
+            
+            const data = await response.json();
+            displayForecastData(data);
+        } catch (error) {
+            console.error('Error fetching forecast data:', error);
+        }
+    }
+
+    async function fetch24HourData(city) {
+        try {
+            const response = await fetch(`/api/24hour?city=${city}`);
+            
+            if (!response.ok) throw new Error('Data 24 jam tidak ditemukan');
+            
+            const data = await response.json();
+            display24HourTable(data);
+        } catch (error) {
+            console.error('Error fetching 24 hour data:', error);
+        }
+    }
+
+    async function fetchCityBackground(city) {
+        try {
+            const response = await fetch(`/api/background?city=${city}`);
+            
+            if (!response.ok) throw new Error('Background image not found');
+            
+            const data = await response.json();
+            
+            if (data.imageUrl) {
+                elements.backgroundContainer.style.backgroundImage = `url(${data.imageUrl})`;
+            }
+        } catch (error) {
+            console.error('Error fetching background image:', error);
+            // Fallback to a default gradient background
+            elements.backgroundContainer.style.backgroundImage = 'none';
+        }
+    }
+
+    async function fetchCityGallery(city) {
+        try {
+            const response = await fetch(`/api/gallery?city=${city}`);
+            
+            if (!response.ok) throw new Error('City gallery not found');
+            
+            const data = await response.json();
+            state.cityImages = data.images;
+            displayCityGallery();
+        } catch (error) {
+            console.error('Error fetching city gallery:', error);
+            // Show placeholder images
+            displayPlaceholderGallery();
+        }
+    }
+
+    function displayWeatherData(data) {
+        elements.cityName.textContent = data.name;
+        elements.tempValue.textContent = Math.round(data.main.temp);
+        elements.weatherDesc.textContent = data.weather[0].description;
+        elements.humidity.textContent = data.main.humidity;
+        elements.windSpeed.textContent = data.wind.speed;
+        elements.pressure.textContent = data.main.pressure;
+        elements.visibility.textContent = (data.visibility / 1000).toFixed(1);
+        
+        // Update weather icon
+        updateWeatherIcon(data.weather[0].id);
+    }
+
+    function updateWeatherIcon(weatherId) {
+        let iconClass = 'fas fa-question';
+        
+        if (weatherId >= 200 && weatherId < 300) {
+            iconClass = 'fas fa-bolt'; // Thunderstorm
+        } else if (weatherId >= 300 && weatherId < 400) {
+            iconClass = 'fas fa-cloud-rain'; // Drizzle
+        } else if (weatherId >= 500 && weatherId < 600) {
+            iconClass = 'fas fa-cloud-showers-heavy'; // Rain
+        } else if (weatherId >= 600 && weatherId < 700) {
+            iconClass = 'fas fa-snowflake'; // Snow
+        } else if (weatherId >= 700 && weatherId < 800) {
+            iconClass = 'fas fa-smog'; // Atmosphere
+        } else if (weatherId === 800) {
+            iconClass = 'fas fa-sun'; // Clear
+        } else if (weatherId > 800) {
+            iconClass = 'fas fa-cloud'; // Clouds
+        }
+        
+        elements.weatherIcon.className = iconClass;
+    }
+
+    function displayForecastData(data) {
+        elements.forecastContainer.innerHTML = '';
+        
+        // Get one forecast per day (at noon)
+        const dailyForecasts = {};
+        for (const item of data.list) {
+            const date = new Date(item.dt * 1000);
+            const day = date.toLocaleDateString('id-ID', { weekday: 'short' });
+            
+            // Only use forecasts around noon (12:00 PM)
+            const hour = date.getHours();
+            if (hour >= 11 && hour <= 13) {
+                if (!dailyForecasts[day]) {
+                    dailyForecasts[day] = item;
+                }
+            }
+        }
+        
+        // Display up to 5 days
+        let count = 0;
+        for (const [day, forecast] of Object.entries(dailyForecasts)) {
+            if (count >= 5) break;
+            
+            const forecastItem = document.createElement('div');
+            forecastItem.className = 'forecast-item';
+            
+            const tempHigh = Math.round(forecast.main.temp_max);
+            const tempLow = Math.round(forecast.main.temp_min);
+            const iconId = forecast.weather[0].id;
+            let iconClass = 'fas fa-question';
+            
+            if (iconId >= 200 && iconId < 300) {
+                iconClass = 'fas fa-bolt';
+            } else if (iconId >= 300 && iconId < 400) {
+                iconClass = 'fas fa-cloud-rain';
+            } else if (iconId >= 500 && iconId < 600) {
+                iconClass = 'fas fa-cloud-showers-heavy';
+            } else if (iconId >= 600 && iconId < 700) {
+                iconClass = 'fas fa-snowflake';
+            } else if (iconId >= 700 && iconId < 800) {
+                iconClass = 'fas fa-smog';
+            } else if (iconId === 800) {
+                iconClass = 'fas fa-sun';
+            } else if (iconId > 800) {
+                iconClass = 'fas fa-cloud';
+            }
+            
+            forecastItem.innerHTML = `
+                <div class="forecast-day">${day}</div>
+                <div class="forecast-icon"><i class="${iconClass}"></i></div>
+                <div class="forecast-temp">
+                    <span class="temp-high">${tempHigh}°</span>
+                    <span class="temp-low">${tempLow}°</span>
+                </div>
+            `;
+            
+            elements.forecastContainer.appendChild(forecastItem);
+            count++;
+        }
+    }
+
+    function display24HourTable(data) {
+        elements.weatherTableBody.innerHTML = '';
+        
+        // Display next 24 hours (8 items, 3 hours each)
+        for (let i = 0; i < 8 && i < data.list.length; i++) {
+            const item = data.list[i];
+            const date = new Date(item.dt * 1000);
+            const hour = date.getHours();
+            const temp = Math.round(item.main.temp);
+            const humidity = item.main.humidity;
+            const windSpeed = item.wind.speed;
+            const iconId = item.weather[0].id;
+            
+            let iconClass = 'fas fa-question';
+            if (iconId >= 200 && iconId < 300) {
+                iconClass = 'fas fa-bolt';
+            } else if (iconId >= 300 && iconId < 400) {
+                iconClass = 'fas fa-cloud-rain';
+            } else if (iconId >= 500 && iconId < 600) {
+                iconClass = 'fas fa-cloud-showers-heavy';
+            } else if (iconId >= 600 && iconId < 700) {
+                iconClass = 'fas fa-snowflake';
+            } else if (iconId >= 700 && iconId < 800) {
+                iconClass = 'fas fa-smog';
+            } else if (iconId === 800) {
+                iconClass = 'fas fa-sun';
+            } else if (iconId > 800) {
+                iconClass = 'fas fa-cloud';
+            }
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${hour}:00</td>
+                <td><i class="${iconClass} table-icon"></i></td>
+                <td class="table-temp">${temp}°C</td>
+                <td>${humidity}%</td>
+                <td>${windSpeed} m/s</td>
+            `;
+            
+            elements.weatherTableBody.appendChild(row);
+        }
+    }
+
+    function displayCityGallery() {
+        elements.galleryContainer.innerHTML = '';
+        
+        if (state.cityImages.length === 0) {
+            displayPlaceholderGallery();
+            return;
+        }
+        
+        state.cityImages.forEach((image, index) => {
+            const galleryItem = document.createElement('div');
+            galleryItem.className = 'gallery-item';
+            
+            galleryItem.innerHTML = `
+                <img src="${image.url}" alt="${image.description}" class="gallery-image">
+                <div class="gallery-overlay">
+                    <div class="gallery-title">${image.description || 'Foto Kota'}</div>
+                    <div class="gallery-photographer">Foto oleh ${image.photographer}</div>
+                </div>
+            `;
+            
+            galleryItem.addEventListener('click', () => {
+                window.open(image.link, '_blank');
+            });
+            
+            elements.galleryContainer.appendChild(galleryItem);
+        });
+    }
+
+    function displayPlaceholderGallery() {
+        // Create placeholder gallery items
+        const placeholderCities = [
+            { name: 'Jakarta', icon: 'fa-city' },
+            { name: 'Bandung', icon: 'fa-mountain' },
+            { name: 'Surabaya', icon: 'fa-umbrella-beach' },
+            { name: 'Yogyakarta', icon: 'fa-torii-gate' },
+            { name: 'Bali', icon: 'fa-umbrella-beach' },
+            { name: 'Medan', icon: 'fa-mosque' }
+        ];
+        
+        elements.galleryContainer.innerHTML = '';
+        
+        placeholderCities.forEach(city => {
+            const galleryItem = document.createElement('div');
+            galleryItem.className = 'gallery-item';
+            
+            galleryItem.innerHTML = `
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(102, 126, 234, 0.2);">
+                    <i class="fas ${city.icon}" style="font-size: 3rem; color: white;"></i>
+                </div>
+                <div class="gallery-overlay">
+                    <div class="gallery-title">${city.name}</div>
+                    <div class="gallery-photographer">Cari kota untuk melihat galeri</div>
+                </div>
+            `;
+            
+            elements.galleryContainer.appendChild(galleryItem);
+        });
+    }
+
+    function checkWeatherAlerts(data) {
+        let alertText = 'Tidak ada peringatan';
+        let showAlert = false;
+        
+        // Check for various weather conditions that might need alerts
+        if (data.wind.speed > 10) {
+            alertText = '⚠️ Angin kencang terdeteksi! Hati-hati saat berada di luar.';
+            showAlert = true;
+        } else if (data.main.humidity > 80 && data.weather[0].id >= 500 && data.weather[0].id < 600) {
+            alertText = '⚠️ Hujan lebat diperkirakan! Jangan lupa bawa payung.';
+            showAlert = true;
+        } else if (data.main.temp > 35) {
+            alertText = '⚠️ Suhu tinggi! Tetap terhidrasi dan hindari paparan sinar matahari berlebihan.';
+            showAlert = true;
+        } else if (data.main.temp < 0) {
+            alertText = '⚠️ Suhu beku! Kenakan pakaian hangat dan berhati-hatilah di permukaan yang licin.';
+            showAlert = true;
+        } else if (data.visibility < 1000) {
+            alertText = '⚠️ Jarak pandang rendah! Berkendara dengan hati-hati jika Anda keluar.';
+            showAlert = true;
+        }
+        
+        elements.alertText.textContent = alertText;
+        
+        if (showAlert) {
+            elements.weatherAlert.classList.remove('hidden');
+            state.lastWeatherAlert = alertText;
+            
+            // Trigger AI response for the alert
+            triggerAiWeatherAlert(alertText);
+        } else {
+            elements.weatherAlert.classList.add('hidden');
+            state.lastWeatherAlert = null;
+        }
+    }
+
+    // Location Functions
+    function getUserLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    state.currentPosition = position;
+                    fetchWeatherByCoordinates(position.coords.latitude, position.coords.longitude);
+                    
+                    // Start watching position for real-time updates
+                    startWatchingPosition();
+                },
+                error => {
+                    console.error('Error getting location:', error);
+                    showNotification('Tidak dapat mendapatkan lokasi Anda. Silakan cari kota secara manual.', 'error');
+                }
+            );
+        } else {
+            showNotification('Geolokasi tidak didukung oleh browser Anda.', 'error');
+        }
+    }
+
+    function startWatchingPosition() {
+        if (navigator.geolocation && !state.watchPositionId) {
+            state.watchPositionId = navigator.geolocation.watchPosition(
+                position => {
+                    // Only update if position changed significantly
+                    if (!state.currentPosition || 
+                        calculateDistance(
+                            position.coords.latitude, 
+                            position.coords.longitude,
+                            state.currentPosition.coords.latitude,
+                            state.currentPosition.coords.longitude
+                        ) > 1000) { // 1km threshold
+                        
+                        state.currentPosition = position;
+                        fetchWeatherByCoordinates(position.coords.latitude, position.coords.longitude);
+                        
+                        // Trigger AI response for location change
+                        triggerAiLocationChange();
+                    }
+                },
+                error => {
+                    console.error('Error watching position:', error);
+                }
+            );
+        }
+    }
+
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371e3; // Earth's radius in meters
+        const φ1 = lat1 * Math.PI/180;
+        const φ2 = lat2 * Math.PI/180;
+        const Δφ = (lat2-lat1) * Math.PI/180;
+        const Δλ = (lon2-lon1) * Math.PI/180;
+
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                  Math.cos(φ1) * Math.cos(φ2) *
+                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+        return R * c; // Distance in meters
+    }
+
+    async function fetchWeatherByCoordinates(lat, lon) {
+        try {
+            const response = await fetch(`/api/weather?lat=${lat}&lon=${lon}`);
+            
+            if (!response.ok) throw new Error('Data cuaca tidak ditemukan');
+            
+            const data = await response.json();
+            state.currentWeather = data;
+            state.currentCity = data.name;
+            elements.cityInput.value = data.name;
+            displayWeatherData(data);
+            
+            // Fetch forecast data
+            await fetchForecastData(data.name);
+            
+            // Fetch 24 hour data
+            await fetch24HourData(data.name);
+            
+            // Fetch city background
+            await fetchCityBackground(data.name);
+            
+            // Fetch city gallery
+            await fetchCityGallery(data.name);
+            
+            // Check for weather alerts
+            checkWeatherAlerts(data);
+            
+            // Check for upcoming todos with weather conditions
+            checkTodosWithWeather(data);
+        } catch (error) {
+            console.error('Error fetching weather data:', error);
+            showNotification('Gagal mengambil data cuaca untuk lokasi Anda.', 'error');
+        }
+    }
+
+    // AI Assistant Functions
+    async function sendAiMessage() {
+        const message = elements.aiInput.value.trim();
+        if (!message) return;
+        
+        // Add user message to chat
+        addAiMessage(message, 'user');
+        elements.aiInput.value = '';
+        
+        // Generate AI response
+        const response = await generateAiResponse(message);
+        addAiMessage(response, 'ai');
+    }
+
+    async function generateAiResponse(message) {
+        // Create context for the AI
+        let context = 'Anda adalah SkyMate, asisten cuaca pribadi dengan kecerdasan Gemini AI. Anda adalah pusat kendali yang mengatur, memantau, dan membantu setiap aktivitas pengguna. Berbicaralah dalam bahasa Indonesia yang sopan, ramah, dan sangat membantu. ';
+        
+        if (state.currentWeather) {
+            context += `Cuaca saat ini di ${state.currentCity}: ${state.currentWeather.main.temp}°C, ${state.currentWeather.weather[0].description}. `;
+        }
+        
+        if (state.todos.length > 0) {
+            context += `Pengguna memiliki ${state.todos.length} tugas/pengingat dalam daftar mereka. `;
+        }
+        
+        // Add weather alert context if present
+        if (state.lastWeatherAlert) {
+            context += `Peringatan cuaca: ${state.lastWeatherAlert}. `;
+        }
+        
+        try {
+            const response = await fetch(`/api/gemini`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: `${context}\n\nPertanyaan: ${message}`
+                        }]
+                    }],
+                    generationConfig: {
+                        temperature: 0.7,
+                        topK: 40,
+                        topP: 0.95,
+                        maxOutputTokens: 1024,
+                    }
+                })
+            });
+            
+            if (!response.ok) throw new Error('Gemini API response failed');
+            
+            const data = await response.json();
+            return data.candidates[0].content.parts[0].text;
+        } catch (error) {
+            console.error('Error generating AI response:', error);
+            
+            // Fallback to predefined responses
+            return generateFallbackResponse(message);
+        }
+    }
+
+    function generateFallbackResponse(message) {
+        const lowerMessage = message.toLowerCase();
+        
+        // Weather-related responses
+        if (lowerMessage.includes('cuaca') || lowerMessage.includes('suhu')) {
+            if (state.currentWeather) {
+                return `Suhu saat ini di ${state.currentCity} adalah ${Math.round(state.currentWeather.main.temp)}°C dengan ${state.currentWeather.weather[0].description}.`;
+            } else {
+                return 'Saya belum memiliki informasi cuaca. Silakan cari kota atau aktifkan layanan lokasi.';
+            }
+        }
+        
+        // Todo-related responses
+        if (lowerMessage.includes('tugas') || lowerMessage.includes('pengingat')) {
+            if (state.todos.length > 0) {
+                return `Anda memiliki ${state.todos.length} tugas/pengingat dalam daftar. Saya akan membantu Anda mengelolanya. Ada yang ingin Anda tanyakan tentang tugas Anda?`;
+            } else {
+                return 'Anda belum memiliki tugas. Klik tombol + untuk menambahkan tugas baru!';
+            }
+        }
+        
+        // Greeting responses
+        if (lowerMessage.includes('halo') || lowerMessage.includes('hai')) {
+            return 'Halo! Saya SkyMate dengan kecerdasan Gemini AI. Saya adalah asisten pribadi Anda yang akan membantu mengatur cuaca, tugas, dan pengingat Anda. Ada yang bisa saya bantu hari ini? 😊';
+        }
+        
+        // General responses
+        const responses = [
+            'Saya di sini untuk membantu Anda dengan informasi cuaca, mengelola tugas, dan mengatur pengingat. Apa yang ingin Anda ketahui?',
+            'Saya dapat memberikan pembaruan cuaca, membantu mengatur hari Anda, dan mengingatkan Anda tentang jadwal penting. Bagaimana saya bisa membantu?',
+            'Jangan ragu untuk bertanya tentang cuaca, tugas, atau pengingat Anda. Saya siap membantu sebagai asisten pribadi Anda!',
+            'Saya SkyMate dengan kecerdasan Gemini AI. Tanyakan apa saja tentang cuaca, tugas, atau jadwal Anda!'
+        ];
+        
+        return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    function addAiMessage(message, sender) {
+        const messageElement = document.createElement('div');
+        messageElement.className = `ai-message ${sender}`;
+        messageElement.textContent = message;
+        
+        elements.aiChat.appendChild(messageElement);
+        elements.aiChat.scrollTop = elements.aiChat.scrollHeight;
+    }
+
+    async function triggerAiWeatherUpdate(weatherData) {
+        const temp = Math.round(weatherData.main.temp);
+        const condition = weatherData.weather[0].description;
+        const city = weatherData.name;
+        
+        let message = `Cuaca diperbarui untuk ${city}: ${temp}°C, ${condition}. `;
+        
+        // Add contextual advice based on weather
+        if (condition.includes('hujan')) {
+            message += 'Jangan lupa bawa payung! ☔';
+        } else if (condition.includes('salju')) {
+            message += 'Kenakan pakaian hangat dan hati-hati di permukaan yang licin! ❄️';
+        } else if (condition.includes('cerah') || condition.includes('matahari')) {
+            message += 'Cuaca bagus untuk aktivitas luar ruangan! 🌞';
+        } else if (temp > 30) {
+            message += 'Cukup panas! Tetap terhidrasi dan cari tempat berteduh jika perlu. 🥵';
+        } else if (temp < 5) {
+            message += 'Dingin di luar! Pastikan mengenakan pakaian hangat. 🥶';
+        }
+        
+        addAiMessage(message, 'ai');
+    }
+
+    async function triggerAiWeatherAlert(alertText) {
+        const message = `Peringatan Cuaca: ${alertText} Saya akan memberi tahu Anda jika ada perubahan.`;
+        addAiMessage(message, 'ai');
+    }
+
+    async function triggerAiLocationChange() {
+        const message = `Saya mendeteksi bahwa Anda telah pindah ke lokasi baru. Cuaca telah diperbarui untuk ${state.currentCity}.`;
+        addAiMessage(message, 'ai');
+    }
+
+    async function triggerAiTaskAdded(task) {
+        // Check if task might be affected by weather
+        const lowerTask = task.toLowerCase();
+        let message = `Tugas/pengingat ditambahkan: "${task}". `;
+        
+        if (state.currentWeather) {
+            const condition = state.currentWeather.weather[0].description;
+            const temp = Math.round(state.currentWeather.main.temp);
+            
+            if (lowerTask.includes('luar') || lowerTask.includes('jalan') || lowerTask.includes('lari')) {
+                if (condition.includes('hujan')) {
+                    message += 'Sedang hujan di luar, mungkin Anda ingin mempertimbangkan kembali atau membawa perlengkapan yang sesuai.';
+                } else if (temp > 30) {
+                    message += 'Cukup panas di luar. Pertimbangkan untuk melakukan aktivitas ini di pagi atau sore hari.';
+                } else if (temp < 5) {
+                    message += 'Dingin di luar. Kenakan pakaian hangat untuk aktivitas luar ruangan Anda.';
+                } else {
+                    message += 'Cuaca terlihat bagus untuk aktivitas luar ruangan Anda!';
+                }
+            } else {
+                message += 'Rencana yang bagus untuk hari ini!';
+            }
+        } else {
+            message += 'Rencana yang bagus untuk hari ini!';
+        }
+        
+        addAiMessage(message, 'ai');
+    }
+
+    // Todo List Functions with Alarm
+    function loadTodos() {
+        const savedTodos = localStorage.getItem('skymate_todos');
+        if (savedTodos) {
+            state.todos = JSON.parse(savedTodos);
+            renderTodos();
+        }
+    }
+
+    function saveTodos() {
+        localStorage.setItem('skymate_todos', JSON.stringify(state.todos));
+    }
+
+    function showTodoInput() {
+        elements.todoInputContainer.style.display = 'flex';
+        elements.todoInput.focus();
+    }
+
+    function hideTodoInput() {
+        elements.todoInputContainer.style.display = 'none';
+        elements.todoInput.value = '';
+        elements.todoTime.value = '';
+    }
+
+    function addTodo() {
+        const taskText = elements.todoInput.value.trim();
+        const taskTime = elements.todoTime.value;
+        
+        if (!taskText) return;
+        
+        const newTodo = {
+            id: Date.now(),
+            text: taskText,
+            time: taskTime,
+            completed: false,
+            createdAt: new Date().toISOString()
+        };
+        
+        state.todos.push(newTodo);
+        saveTodos();
+        renderTodos();
+        hideTodoInput();
+        
+        // Trigger AI response
+        triggerAiTaskAdded(taskText);
+        
+        showNotification('Tugas/pengingat berhasil ditambahkan', 'success');
+    }
+
+    function toggleTodo(id) {
+        const todo = state.todos.find(t => t.id === id);
+        if (todo) {
+            todo.completed = !todo.completed;
+            saveTodos();
+            renderTodos();
+        }
+    }
+
+    function deleteTodo(id) {
+        state.todos = state.todos.filter(t => t.id !== id);
+        saveTodos();
+        renderTodos();
+    }
+
+    function renderTodos() {
+        elements.todoList.innerHTML = '';
+        
+        if (state.todos.length === 0) {
+            elements.todoList.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Belum ada tugas atau pengingat</p>';
+            return;
+        }
+        
+        // Sort todos: ones with time first, then by time
+        const sortedTodos = [...state.todos].sort((a, b) => {
+            if (a.time && !b.time) return -1;
+            if (!a.time && b.time) return 1;
+            if (a.time && b.time) return a.time.localeCompare(b.time);
+            return 0;
+        });
+        
+        sortedTodos.forEach(todo => {
+            const todoItem = document.createElement('div');
+            todoItem.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+            
+            todoItem.innerHTML = `
+                <input type="checkbox" class="todo-checkbox" ${todo.completed ? 'checked' : ''} data-id="${todo.id}">
+                <span class="todo-text">${todo.text}</span>
+                ${todo.time ? `<span class="todo-time"><i class="far fa-clock"></i> ${todo.time}</span>` : ''}
+                <div class="todo-actions">
+                    <button class="delete-todo" data-id="${todo.id}"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            
+            elements.todoList.appendChild(todoItem);
+        });
+        
+        // Add event listeners to todo items
+        document.querySelectorAll('.todo-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                toggleTodo(parseInt(e.target.dataset.id));
+            });
+        });
+        
+        document.querySelectorAll('.delete-todo').forEach(button => {
+            button.addEventListener('click', (e) => {
+                deleteTodo(parseInt(e.target.dataset.id));
+            });
+        });
+    }
+
+    function startAlarmCheckInterval() {
+        // Check alarms every minute
+        state.alarmCheckInterval = setInterval(() => {
+            checkAlarms();
+        }, 60000); // 1 minute
+    }
+
+    function checkAlarms() {
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const currentTime = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
+        
+        state.todos.forEach(todo => {
+            if (!todo.time || todo.completed) return;
+            
+            // Check if alarm time matches current time (within 1 minute)
+            if (todo.time === currentTime) {
+                triggerAlarm(todo);
+            }
+            
+            // Check if alarm is within 30 minutes for weather notification
+            const [alarmHour, alarmMinute] = todo.time.split(':').map(Number);
+            const alarmDateTime = new Date();
+            alarmDateTime.setHours(alarmHour, alarmMinute, 0, 0);
+            
+            const timeDiff = alarmDateTime.getTime() - now.getTime();
+            const minutesDiff = Math.floor(timeDiff / (1000 * 60));
+            
+            if (minutesDiff === 30 && minutesDiff > 0) {
+                checkAlarmWeather(todo);
+            }
+        });
+    }
+
+    function triggerAlarm(todo) {
+        // Show notification
+        showNotification(`⏰ Pengingat: ${todo.text}`, 'info');
+        
+        // Add AI message
+        addAiMessage(`⏰ Waktunya untuk: ${todo.text}! Semoga aktivitas Anda berjalan lancar.`, 'ai');
+        
+        // Play sound (if supported)
+        playAlarmSound();
+        
+        // Mark as completed after triggering
+        todo.completed = true;
+        saveTodos();
+        renderTodos();
+    }
+
+    function playAlarmSound() {
+        // Create a simple beep sound using Web Audio API
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        } catch (error) {
+            console.error('Error playing alarm sound:', error);
+        }
+    }
+
+    async function checkAlarmWeather(todo) {
+        if (!state.currentWeather) return;
+        
+        const condition = state.currentWeather.weather[0].description;
+        const temp = Math.round(state.currentWeather.main.temp);
+        const isOutdoorActivity = todo.text.toLowerCase().includes('luar') || 
+                                 todo.text.toLowerCase().includes('olahraga') || 
+                                 todo.text.toLowerCase().includes('jalan') || 
+                                 todo.text.toLowerCase().includes('lari');
+        
+        if (isOutdoorActivity) {
+            let message = `Pengingat 30 menit lagi: "${todo.text}" pada ${todo.time}. `;
+            
+            if (condition.includes('hujan')) {
+                message += '⚠️ Cuaca sedang hujan, jangan lupa bawa payung, ya.';
+            } else if (temp > 30) {
+                message += '⚠️ Suhu cukup panas, pertimbangkan untuk membawa air minum dan gunakan tabir surya.';
+            } else if (temp < 10) {
+                message += '⚠️ Suhu cukup dingin, jangan lupa kenakan pakaian hangat.';
+            } else {
+                message += 'Cuaca terlihat bagus untuk aktivitas Anda!';
+            }
+            
+            showNotification(message, 'warning');
+            addAiMessage(message, 'ai');
+        }
+    }
+
+    async function checkTodosWithWeather(weatherData) {
+        // Check for any todos in the next few hours that might be affected by weather
+        const now = new Date();
+        const threeHoursLater = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+        
+        state.todos.forEach(todo => {
+            if (!todo.time || todo.completed) return;
+            
+            const [hour, minute] = todo.time.split(':').map(Number);
+            const todoDateTime = new Date();
+            todoDateTime.setHours(hour, minute, 0, 0);
+            
+            // Check if todo is within the next 3 hours
+            if (todoDateTime >= now && todoDateTime <= threeHoursLater) {
+                const isOutdoorActivity = todo.text.toLowerCase().includes('luar') || 
+                                         todo.text.toLowerCase().includes('olahraga') || 
+                                         todo.text.toLowerCase().includes('jalan') || 
+                                         todo.text.toLowerCase().includes('lari');
+                
+                if (isOutdoorActivity) {
+                    const condition = weatherData.weather[0].description;
+                    const temp = Math.round(weatherData.main.temp);
+                    
+                    if (condition.includes('hujan') || temp > 30 || temp < 10) {
+                        let message = `Peringatan cuaca untuk "${todo.text}" (${todo.time}): `;
+                        
+                        if (condition.includes('hujan')) {
+                            message += 'Diperkirakan hujan, siapkan payung.';
+                        } else if (temp > 30) {
+                            message += 'Suhu tinggi, bawa air minum dan gunakan tabir surya.';
+                        } else if (temp < 10) {
+                            message += 'Suhu dingin, kenakan pakaian hangat.';
+                        }
+                        
+                        addAiMessage(message, 'ai');
+                    }
+                }
+            }
+        });
+    }
+
+    // Utility Functions
+    function updateCurrentDate() {
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        elements.currentDate.textContent = now.toLocaleDateString('id-ID', options);
+    }
+
+    function startWeatherUpdateInterval() {
+        // Update weather every 5 minutes
+        state.weatherUpdateInterval = setInterval(() => {
+            if (state.currentCity) {
+                fetchWeatherData(state.currentCity);
+            } else if (state.currentPosition) {
+                fetchWeatherByCoordinates(
+                    state.currentPosition.coords.latitude,
+                    state.currentPosition.coords.longitude
+                );
+            }
+        }, 5 * 60 * 1000); // 5 minutes in milliseconds
+    }
+
+    // Clean up on page unload
+    window.addEventListener('beforeunload', () => {
+        if (state.watchPositionId) {
+            navigator.geolocation.clearWatch(state.watchPositionId);
+        }
+        
+        if (state.weatherUpdateInterval) {
+            clearInterval(state.weatherUpdateInterval);
+        }
+        
+        if (state.alarmCheckInterval) {
+            clearInterval(state.alarmCheckInterval);
+        }
+    });
+
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+    </script>
+</body>
+</html>
